@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { Calendar as CalendarIcon, Plus, Clock, X } from "lucide-react";
+import { Calendar as CalendarIcon, Plus, Clock, X, CalendarDays } from "lucide-react";
 
 function NewEventModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
     if (!isOpen) return null;
@@ -48,11 +48,8 @@ export default function CalendarPage() {
     const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
     const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1).getDay();
 
-    const upcomingEvents = [
-        { day: '10', title: 'Fatura Nubank', type: 'bill', val: 'R$ 1.250,00' },
-        { day: '15', title: 'Conta de Luz', type: 'bill', val: 'R$ 180,00' },
-        { day: '20', title: 'Salário', type: 'income', val: 'R$ 12.000,00' },
-    ];
+    // TODO: Load real events from database
+    const upcomingEvents: { day: string; title: string; type: string; val: string }[] = [];
 
     return (
         <div className="p-6 md:p-8 max-w-6xl mx-auto pb-24">
@@ -88,8 +85,8 @@ export default function CalendarPage() {
                                 <div
                                     key={day}
                                     className={`p-3 rounded-xl text-sm cursor-pointer transition relative ${isToday
-                                            ? 'bg-violet-600 text-white font-bold'
-                                            : 'hover:bg-white/5 text-gray-300'
+                                        ? 'bg-violet-600 text-white font-bold'
+                                        : 'hover:bg-white/5 text-gray-300'
                                         }`}
                                 >
                                     {day}
@@ -106,20 +103,27 @@ export default function CalendarPage() {
                 <div className="space-y-6">
                     <div>
                         <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4">Hoje</h3>
-                        <div className="bg-[#111] p-4 rounded-2xl border-l-4 border-blue-500 mb-3">
-                            <h4 className="font-bold text-white">Reunião de Projeto</h4>
-                            <p className="text-xs text-gray-400 flex items-center gap-1 mt-1"><Clock size={12} /> 14:00 - 15:00</p>
+                        <div className="text-center py-8 text-gray-600">
+                            <CalendarDays size={32} className="mx-auto mb-2 opacity-50" />
+                            <p className="text-sm">Nenhum evento hoje</p>
                         </div>
                     </div>
 
                     <div>
                         <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4">Próximos Vencimentos</h3>
-                        {upcomingEvents.map((ev, i) => (
-                            <div key={i} className={`p-4 rounded-2xl mb-3 border-l-4 ${ev.type === 'income' ? 'bg-emerald-900/10 border-emerald-500' : 'bg-[#111] border-rose-500'}`}>
-                                <h4 className="font-bold text-white">{ev.title}</h4>
-                                <p className="text-xs text-gray-400">Dia {ev.day} • {ev.val}</p>
+                        {upcomingEvents.length === 0 ? (
+                            <div className="text-center py-8 text-gray-600">
+                                <p className="text-sm">Nenhum vencimento próximo</p>
+                                <p className="text-xs text-gray-700 mt-1">Adicione eventos clicando em "Novo Evento"</p>
                             </div>
-                        ))}
+                        ) : (
+                            upcomingEvents.map((ev, i) => (
+                                <div key={i} className={`p-4 rounded-2xl mb-3 border-l-4 ${ev.type === 'income' ? 'bg-emerald-900/10 border-emerald-500' : 'bg-[#111] border-rose-500'}`}>
+                                    <h4 className="font-bold text-white">{ev.title}</h4>
+                                    <p className="text-xs text-gray-400">Dia {ev.day} • {ev.val}</p>
+                                </div>
+                            ))
+                        )}
                     </div>
                 </div>
             </div>

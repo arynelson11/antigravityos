@@ -94,19 +94,6 @@ export default function CardsPage() {
                 </div>
             )}
 
-            {/* Investimentos */}
-            <h2 className="text-2xl font-bold mb-6 text-white">Investimentos 📈</h2>
-            <div className="bg-[#111] border border-white/5 rounded-2xl p-8 flex items-center gap-6">
-                <div className="w-16 h-16 bg-emerald-900/20 rounded-full flex items-center justify-center text-emerald-500">
-                    <Wallet size={32} />
-                </div>
-                <div>
-                    <p className="text-gray-400">Total Investido</p>
-                    <h3 className="text-3xl font-bold text-emerald-400">R$ 45.000,00</h3>
-                    <p className="text-xs text-gray-500 mt-1">Renda Fixa e Ações (Inter)</p>
-                </div>
-            </div>
-
             {/* MODAIS */}
             <CardDetailModal card={selectedCard} onClose={() => setSelectedCard(null)} />
             <NewCardModal isOpen={isNewCardModalOpen} onClose={() => setNewCardModalOpen(false)} />
