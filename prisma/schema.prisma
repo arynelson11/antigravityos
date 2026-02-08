@@ -1,0 +1,89 @@
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Profile {
+  id         String    @id @db.Uuid // Matches auth.users.id
+  email      String?
+  name       String?
+  avatar_url String?
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+
+  transactions Transaction[]
+  credit_cards CreditCard[]
+  tasks        Task[]
+
+  @@map("profiles")
+}
+
+model Account {
+  id      Int    @id @default(autoincrement())
+  name    String
+  balance Float  @default(0)
+
+  @@map("accounts")
+}
+
+model Transaction {
+  id                 Int      @id @default(autoincrement())
+  description        String
+  amount             Float
+  date               DateTime
+  category           String
+  type               String
+  user_id            String?  @db.Uuid
+  card_id            Int?
+  installment_number Int?
+  total_installments Int?
+  is_paid            Boolean  @default(false)
+  created_at         DateTime @default(now())
+
+  profile Profile? @relation(fields: [user_id], references: [id])
+  card    CreditCard? @relation(fields: [card_id], references: [id])
+
+  @@map("transactions")
+}
+
+model CreditCard {
+  id           Int    @id @default(autoincrement())
+  name         String
+  limit_amount Float
+  closing_day  Int
+  due_day      Int
+  color_theme  String
+  user_id      String @db.Uuid
+
+  profile      Profile @relation(fields: [user_id], references: [id])
+  transactions Transaction[]
+
+  @@map("credit_cards")
+}
+
+model Task {
+  id       Int      @id @default(autoincrement())
+  title    String
+  is_done  Boolean  @default(false)
+  priority String   @default("low")
+  user_id  String?  @db.Uuid
+
+  profile  Profile? @relation(fields: [user_id], references: [id])
+
+  @@map("tasks")
+}
+
+model Event {
+  id         Int      @id @default(autoincrement())
+  title      String
+  start_time DateTime
+  is_all_day Boolean  @default(false)
+
+  @@map("events")
+}

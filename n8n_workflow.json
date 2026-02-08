@@ -1,0 +1,1282 @@
+{
+    "name": "Assistente Pessoal Familia",
+    "nodes": [
+        {
+            "parameters": {
+                "toolDescription": "Use essa ferramenta para fazer buscas na internet",
+                "method": "POST",
+                "url": "https://api.tavily.com/search",
+                "sendBody": true,
+                "specifyBody": "json",
+                "jsonBody": "{\n    \"api_key\": \"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\",\n    \"query\": \"{searchTerm}\",\n    \"search_depth\": \"basic\",\n    \"include_answer\": true,\n    \"topic\": \"news\",\n    \"include_raw_content\": true,\n    \"max_results\": 3\n} ",
+                "placeholderDefinitions": {
+                    "values": [
+                        {
+                            "name": "searchTerm",
+                            "description": "What the user has requested to search the internet for",
+                            "type": "string"
+                        }
+                    ]
+                }
+            },
+            "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+            "typeVersion": 1.1,
+            "position": [
+                -16,
+                64
+            ],
+            "id": "a0930564-d619-47bd-959f-e1c03ea5d62b",
+            "name": "Tavily"
+        },
+        {
+            "parameters": {
+                "description": "=Use esta ferramenta para pensar sobre algo..."
+            },
+            "type": "@n8n/n8n-nodes-langchain.toolThink",
+            "typeVersion": 1,
+            "position": [
+                336,
+                752
+            ],
+            "id": "ec39445f-6616-47fb-a01d-06509977fd16",
+            "name": "Think"
+        },
+        {
+            "parameters": {
+                "promptType": "define",
+                "text": "={{ $json.mensagem || $json.mensagem_audio || $json.comprovante || \"OK\" }}",
+                "options": {
+                    "systemMessage": "=# Identidade e Missão\nVocê é a **Lia**..."
+                }
+            },
+            "type": "@n8n/n8n-nodes-langchain.agent",
+            "typeVersion": 1.7,
+            "position": [
+                -288,
+                192
+            ],
+            "id": "48afd3dc-6d64-4e06-a19b-dce67f937908",
+            "name": "Agente Pessoal Completo"
+        },
+        {
+            "parameters": {},
+            "type": "@n8n/n8n-nodes-langchain.toolCalculator",
+            "typeVersion": 1,
+            "position": [
+                -240,
+                64
+            ],
+            "id": "9d66e36b-6327-4f9d-a95f-e5ad0186fec5",
+            "name": "Calculadora"
+        },
+        {
+            "parameters": {
+                "rules": {
+                    "values": [
+                        {
+                            "conditions": {
+                                "options": {
+                                    "caseSensitive": true,
+                                    "leftValue": "",
+                                    "typeValidation": "strict",
+                                    "version": 2
+                                },
+                                "conditions": [
+                                    {
+                                        "leftValue": "={{ $('Info').item.json.mensagem }}",
+                                        "rightValue": "",
+                                        "operator": {
+                                            "type": "string",
+                                            "operation": "notEmpty",
+                                            "singleValue": true
+                                        },
+                                        "id": "1382cd26-d96e-4c55-99dd-2ca305ffe82e"
+                                    }
+                                ],
+                                "combinator": "and"
+                            },
+                            "renameOutput": true,
+                            "outputKey": "Texto"
+                        },
+                        {
+                            "conditions": {
+                                "options": {
+                                    "caseSensitive": true,
+                                    "leftValue": "",
+                                    "typeValidation": "strict",
+                                    "version": 2
+                                },
+                                "conditions": [
+                                    {
+                                        "id": "b9a7e16f-b6e4-45d7-846d-92dcb3117593",
+                                        "leftValue": "={{ $('Info').item.json.mensagem_de_audio }}",
+                                        "rightValue": "",
+                                        "operator": {
+                                            "type": "string",
+                                            "operation": "notEmpty",
+                                            "singleValue": true
+                                        }
+                                    }
+                                ],
+                                "combinator": "and"
+                            },
+                            "renameOutput": true,
+                            "outputKey": "Áudio"
+                        },
+                        {
+                            "conditions": {
+                                "options": {
+                                    "caseSensitive": true,
+                                    "leftValue": "",
+                                    "typeValidation": "strict",
+                                    "version": 2
+                                },
+                                "conditions": [
+                                    {
+                                        "id": "702b30a7-c94c-4828-afa7-dae8593a4b15",
+                                        "leftValue": "={{ $item(\"0\").$node[\"Telegram Trigger\"].json[\"message\"][\"photo\"][\"3\"][\"file_id\"] }}",
+                                        "rightValue": "=image",
+                                        "operator": {
+                                            "type": "string",
+                                            "operation": "notEmpty",
+                                            "singleValue": true
+                                        }
+                                    }
+                                ],
+                                "combinator": "and"
+                            },
+                            "renameOutput": true,
+                            "outputKey": "Image"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "type": "n8n-nodes-base.switch",
+            "typeVersion": 3.2,
+            "position": [
+                -2672,
+                192
+            ],
+            "id": "eab222a1-9f83-43f9-ad8f-e7c99b7d6672",
+            "name": "Tipo de mensagem"
+        },
+        {
+            "parameters": {
+                "assignments": {
+                    "assignments": [
+                        {
+                            "id": "7eab8669-6929-4dc6-b3e2-943065bc306c",
+                            "name": "mensagem",
+                            "value": "={{ $json.mensagem }}",
+                            "type": "string"
+                        },
+                        {
+                            "id": "676d14ec-72d3-4970-9fa0-5e39ff976011",
+                            "name": "mensagem_audio",
+                            "value": "={{ $json.content.parts[0].text }}",
+                            "type": "string"
+                        },
+                        {
+                            "id": "03a083a9-7ff7-44d1-85fc-2f0ac68a3388",
+                            "name": "comprovante",
+                            "value": "={{ $json.output[0].content[0].text }}",
+                            "type": "string"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "type": "n8n-nodes-base.set",
+            "typeVersion": 3.4,
+            "position": [
+                -896,
+                192
+            ],
+            "id": "c163dc8b-b141-4c3e-ba42-dbcd7a026448",
+            "name": "Set mensagens",
+            "executeOnce": true
+        },
+        {
+            "parameters": {
+                "assignments": {
+                    "assignments": [
+                        {
+                            "id": "c8fd010d-6096-4a50-b3e2-e9fe26661840",
+                            "name": "id_mensagem",
+                            "value": "={{ $json.message.message_id }}",
+                            "type": "string"
+                        },
+                        {
+                            "id": "1b513343-9b6a-4f6e-a012-ed819bf34a31",
+                            "name": "id_conta",
+                            "value": "={{ $json.message.from.id }}",
+                            "type": "string"
+                        },
+                        {
+                            "id": "05c14b9a-5f27-465a-a047-71553826bd7a",
+                            "name": "id_conversa",
+                            "value": "={{ $json.message.chat.id }}",
+                            "type": "string"
+                        },
+                        {
+                            "id": "0d622a33-f313-4758-a764-fa6cbf2b0587",
+                            "name": "mensagem",
+                            "value": "={{ $json.message.text }}",
+                            "type": "string"
+                        },
+                        {
+                            "id": "8f4b9d84-56e0-4f45-9f17-68c53f365f43",
+                            "name": "mensagem_de_audio",
+                            "value": "={{ $json.message.voice.file_id }}",
+                            "type": "string"
+                        },
+                        {
+                            "id": "2b679a3f-788f-4cd2-88d5-4f03af68f224",
+                            "name": "timestamp",
+                            "value": "={{ $now }}",
+                            "type": "string"
+                        },
+                        {
+                            "id": "7b511ab2-3995-4f5c-8ca8-83b4b0b02760",
+                            "name": "tipo_anexo",
+                            "value": "=",
+                            "type": "string"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "type": "n8n-nodes-base.set",
+            "typeVersion": 3.4,
+            "position": [
+                -2864,
+                208
+            ],
+            "id": "faa2214a-4106-42aa-831b-585588062438",
+            "name": "Info"
+        },
+        {
+            "parameters": {
+                "name": "={{ $binary.data.fileName }}",
+                "driveId": {
+                    "__rl": true,
+                    "value": "My Drive",
+                    "mode": "list",
+                    "cachedResultName": "My Drive",
+                    "cachedResultUrl": "https://drive.google.com/drive/my-drive"
+                },
+                "folderId": {
+                    "__rl": true,
+                    "value": "1MNQYltH8iqhe76MAQnQaOhVvy3YnHfOu",
+                    "mode": "id"
+                },
+                "options": {}
+            },
+            "type": "n8n-nodes-base.googleDrive",
+            "typeVersion": 3,
+            "position": [
+                -2080,
+                528
+            ],
+            "id": "8039874c-5d52-419c-8154-6c42d69a02ab",
+            "name": "Upload arquivo",
+            "credentials": {
+                "googleDriveOAuth2Api": {
+                    "id": "3pmX8UD3xlKYHQlI",
+                    "name": "Google Drive - Assistente Pessoal Familia"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "=https://api.telegram.org/bot8238501214:AAHt_SoY0_BxHX116U9Gh4_SrRaJx1x0E3I/sendVoice",
+                "sendBody": true,
+                "contentType": "multipart-form-data",
+                "bodyParameters": {
+                    "parameters": [
+                        {
+                            "name": "chat_id",
+                            "value": "={{$node[\"Telegram Trigger\"].json.message.chat.id}}"
+                        },
+                        {
+                            "parameterType": "formBinaryData",
+                            "name": "voice",
+                            "inputDataFieldName": "data"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.2,
+            "position": [
+                1776,
+                336
+            ],
+            "id": "4702358a-92c7-4361-8263-21531bcb6344",
+            "name": "Enviar áudio"
+        },
+        {
+            "parameters": {
+                "rules": {
+                    "values": [
+                        {
+                            "conditions": {
+                                "options": {
+                                    "caseSensitive": true,
+                                    "leftValue": "",
+                                    "typeValidation": "strict",
+                                    "version": 2
+                                },
+                                "conditions": [
+                                    {
+                                        "leftValue": "={{ $('Info').item.json.mensagem }}{{ $json.text }}",
+                                        "rightValue": "",
+                                        "operator": {
+                                            "type": "string",
+                                            "operation": "notEmpty",
+                                            "singleValue": true
+                                        },
+                                        "id": "1382cd26-d96e-4c55-99dd-2ca305ffe82e"
+                                    }
+                                ],
+                                "combinator": "and"
+                            },
+                            "renameOutput": true,
+                            "outputKey": "Texto"
+                        },
+                        {
+                            "conditions": {
+                                "options": {
+                                    "caseSensitive": true,
+                                    "leftValue": "",
+                                    "typeValidation": "strict",
+                                    "version": 2
+                                },
+                                "conditions": [
+                                    {
+                                        "id": "b9a7e16f-b6e4-45d7-846d-92dcb3117593",
+                                        "leftValue": "={{ !!$node[\"Telegram Trigger\"].json.message?.voice }}",
+                                        "rightValue": "",
+                                        "operator": {
+                                            "type": "boolean",
+                                            "operation": "true",
+                                            "singleValue": true
+                                        }
+                                    }
+                                ],
+                                "combinator": "and"
+                            },
+                            "renameOutput": true,
+                            "outputKey": "Áudio"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "type": "n8n-nodes-base.switch",
+            "typeVersion": 3.2,
+            "position": [
+                1536,
+                224
+            ],
+            "id": "51f2d1d4-aae5-4184-8600-0e7dfe1ae05d",
+            "name": "Tipo de mensagem2"
+        },
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "https://api.elevenlabs.io/v1/text-to-speech/vjRwseENw3VavHcCaSld",
+                "authentication": "genericCredentialType",
+                "genericAuthType": "httpHeaderAuth",
+                "sendQuery": true,
+                "queryParameters": {
+                    "parameters": [
+                        {
+                            "name": "output_format",
+                            "value": "opus_48000_32"
+                        }
+                    ]
+                },
+                "sendBody": true,
+                "bodyParameters": {
+                    "parameters": [
+                        {
+                            "name": "text",
+                            "value": "={{ $json.text }}"
+                        },
+                        {
+                            "name": "model_id",
+                            "value": "eleven_flash_v2_5"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.2,
+            "position": [
+                1120,
+                416
+            ],
+            "id": "b99b08cc-5d7d-4b31-9490-1f2b4c3daef1",
+            "name": "Gerar áudio",
+            "retryOnFail": true,
+            "credentials": {
+                "httpHeaderAuth": {
+                    "id": "ysmb1mGfMW3d2Xpq",
+                    "name": "ElevenLabs"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "promptType": "define",
+                "text": "={{ $item(\"0\").$node[\"Tipo de mensagem1\"].json[\"output\"] }}",
+                "messages": {
+                    "messageValues": [
+                        {
+                            "message": "=Você é um assistente especialista em text-to-speech..."
+                        }
+                    ]
+                }
+            },
+            "type": "@n8n/n8n-nodes-langchain.chainLlm",
+            "typeVersion": 1.6,
+            "position": [
+                608,
+                256
+            ],
+            "id": "f00dd7ec-14e8-41c2-8d96-4f6eb9bd76a5",
+            "name": "Formatar SSML"
+        },
+        {
+            "parameters": {
+                "rules": {
+                    "values": [
+                        {
+                            "conditions": {
+                                "options": {
+                                    "caseSensitive": true,
+                                    "leftValue": "",
+                                    "typeValidation": "strict",
+                                    "version": 2
+                                },
+                                "conditions": [
+                                    {
+                                        "leftValue": "={{ $('Info').item.json.mensagem }}{{ $json.output }}",
+                                        "rightValue": "",
+                                        "operator": {
+                                            "type": "string",
+                                            "operation": "notEmpty",
+                                            "singleValue": true
+                                        },
+                                        "id": "1382cd26-d96e-4c55-99dd-2ca305ffe82e"
+                                    }
+                                ],
+                                "combinator": "and"
+                            },
+                            "renameOutput": true,
+                            "outputKey": "Texto"
+                        },
+                        {
+                            "conditions": {
+                                "options": {
+                                    "caseSensitive": true,
+                                    "leftValue": "",
+                                    "typeValidation": "strict",
+                                    "version": 2
+                                },
+                                "conditions": [
+                                    {
+                                        "id": "b9a7e16f-b6e4-45d7-846d-92dcb3117593",
+                                        "leftValue": "={{ !!$node[\"Telegram Trigger\"].json.message?.voice }}",
+                                        "rightValue": "",
+                                        "operator": {
+                                            "type": "boolean",
+                                            "operation": "true",
+                                            "singleValue": true
+                                        }
+                                    }
+                                ],
+                                "combinator": "and"
+                            },
+                            "renameOutput": true,
+                            "outputKey": "Áudio"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "type": "n8n-nodes-base.switch",
+            "typeVersion": 3.2,
+            "position": [
+                320,
+                192
+            ],
+            "id": "30a6c44d-c0cd-4eac-9b9b-75d264f8839e",
+            "name": "Tipo de mensagem1"
+        },
+        {
+            "parameters": {
+                "promptType": "define",
+                "text": "={{ $json.output }}",
+                "messages": {
+                    "messageValues": [
+                        {
+                            "message": "=Você é especialista em formatação de mensagem para WhatsApp..."
+                        }
+                    ]
+                }
+            },
+            "type": "@n8n/n8n-nodes-langchain.chainLlm",
+            "typeVersion": 1.6,
+            "position": [
+                1040,
+                96
+            ],
+            "id": "23a7104c-ff21-4d76-aef8-b7495c1be318",
+            "name": "Formatar texto"
+        },
+        {
+            "parameters": {
+                "model": {
+                    "__rl": true,
+                    "value": "gpt-4o-mini",
+                    "mode": "list",
+                    "cachedResultName": "gpt-4o-mini"
+                },
+                "options": {}
+            },
+            "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+            "typeVersion": 1.2,
+            "position": [
+                688,
+                416
+            ],
+            "id": "5a511daa-d37a-4f7f-bf7e-4eb3c9c31b34",
+            "name": "OpenAI Chat Model1",
+            "credentials": {
+                "openAiApi": {
+                    "id": "So9Ha35boFOAmfdI",
+                    "name": "OpenAi Ary"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "model": {
+                    "__rl": true,
+                    "value": "gpt-4o-mini",
+                    "mode": "list",
+                    "cachedResultName": "gpt-4o-mini"
+                },
+                "options": {}
+            },
+            "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+            "typeVersion": 1.2,
+            "position": [
+                1120,
+                272
+            ],
+            "id": "45f97ba8-7bf3-4e5a-8003-e5a63449a317",
+            "name": "OpenAI Chat Model2",
+            "credentials": {
+                "openAiApi": {
+                    "id": "So9Ha35boFOAmfdI",
+                    "name": "OpenAi Ary"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "updates": [
+                    "message",
+                    "channel_post"
+                ],
+                "additionalFields": {}
+            },
+            "type": "n8n-nodes-base.telegramTrigger",
+            "typeVersion": 1.2,
+            "position": [
+                -3056,
+                208
+            ],
+            "id": "8c4b63ee-5b72-4975-acb6-9c03b529d950",
+            "name": "Telegram Trigger",
+            "webhookId": "5cc76a51-ad87-42a4-a674-339fc6f40149",
+            "credentials": {
+                "telegramApi": {
+                    "id": "jDGOWqDMlF8kILL5",
+                    "name": "Assistente Pessoal Familia"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "resource": "file",
+                "fileId": "={{ $json.mensagem_de_audio }}",
+                "additionalFields": {}
+            },
+            "type": "n8n-nodes-base.telegram",
+            "typeVersion": 1.2,
+            "position": [
+                -2336,
+                192
+            ],
+            "id": "f46c3932-a600-4e04-a5eb-06857320c84f",
+            "name": "Get a file",
+            "webhookId": "8ac968d5-7c28-4477-9934-afb551662f6e",
+            "credentials": {
+                "telegramApi": {
+                    "id": "jDGOWqDMlF8kILL5",
+                    "name": "Assistente Pessoal Familia"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "resource": "audio",
+                "modelId": {
+                    "__rl": true,
+                    "value": "models/gemini-2.5-flash",
+                    "mode": "list",
+                    "cachedResultName": "models/gemini-2.5-flash"
+                },
+                "inputType": "binary",
+                "options": {}
+            },
+            "type": "@n8n/n8n-nodes-langchain.googleGemini",
+            "typeVersion": 1.1,
+            "position": [
+                -1920,
+                192
+            ],
+            "id": "93c63656-c26b-4a27-b6a5-e6de1e68a6f9",
+            "name": "Transcribe a recording",
+            "credentials": {
+                "googlePalmApi": {
+                    "id": "LzxSBZ6glu5lQYVq",
+                    "name": "Gemini - Ary"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "model": {
+                    "__rl": true,
+                    "mode": "list",
+                    "value": "gpt-5-mini"
+                },
+                "builtInTools": {},
+                "options": {}
+            },
+            "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+            "typeVersion": 1.3,
+            "position": [
+                -384,
+                400
+            ],
+            "id": "ce0da83a-df29-4775-8bab-012ebad0d853",
+            "name": "OpenAI Chat Model",
+            "credentials": {
+                "openAiApi": {
+                    "id": "So9Ha35boFOAmfdI",
+                    "name": "OpenAi Ary"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "sessionIdType": "customKey",
+                "sessionKey": "={{ $('Info').item.json.id_conta }}"
+            },
+            "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+            "typeVersion": 1.3,
+            "position": [
+                -208,
+                400
+            ],
+            "id": "0b80ada3-3301-46d3-8d86-67400264fef6",
+            "name": "Simple Memory"
+        },
+        {
+            "parameters": {
+                "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+                "text": "={{ $json.text }}",
+                "additionalFields": {
+                    "appendAttribution": false
+                }
+            },
+            "type": "n8n-nodes-base.telegram",
+            "typeVersion": 1.2,
+            "position": [
+                1776,
+                144
+            ],
+            "id": "0549250d-0941-4f77-99b3-c539d303abbd",
+            "name": "Send a text message",
+            "webhookId": "19c25f15-a9d2-4a5b-8b3d-1bfed6bbf51e",
+            "credentials": {
+                "telegramApi": {
+                    "id": "jDGOWqDMlF8kILL5",
+                    "name": "Assistente Pessoal Familia"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "calendar": {
+                    "__rl": true,
+                    "value": "arynelson11@gmail.com",
+                    "mode": "list",
+                    "cachedResultName": "arynelson11@gmail.com"
+                },
+                "additionalFields": {}
+            },
+            "type": "n8n-nodes-base.googleCalendarTool",
+            "typeVersion": 1.3,
+            "position": [
+                -16,
+                720
+            ],
+            "id": "6f7f7556-5a3e-474a-bcaf-f6302990b8da",
+            "name": "Create an event in Google Calendar",
+            "credentials": {
+                "googleCalendarOAuth2Api": {
+                    "id": "8UKHQOPZrL4gaRS4",
+                    "name": "Google Calendar - Ary"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "operation": "delete",
+                "calendar": {
+                    "__rl": true,
+                    "value": "arynelson11@gmail.com",
+                    "mode": "list",
+                    "cachedResultName": "arynelson11@gmail.com"
+                },
+                "eventId": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Event_ID', ``, 'string') }}",
+                "options": {}
+            },
+            "type": "n8n-nodes-base.googleCalendarTool",
+            "typeVersion": 1.3,
+            "position": [
+                -176,
+                720
+            ],
+            "id": "28b2035c-3018-4743-b4a2-5e885e0de9ec",
+            "name": "Delete an event in Google Calendar",
+            "credentials": {
+                "googleCalendarOAuth2Api": {
+                    "id": "8UKHQOPZrL4gaRS4",
+                    "name": "Google Calendar - Ary"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "operation": "getAll",
+                "calendar": {
+                    "__rl": true,
+                    "value": "arynelson11@gmail.com",
+                    "mode": "list",
+                    "cachedResultName": "arynelson11@gmail.com"
+                },
+                "options": {}
+            },
+            "type": "n8n-nodes-base.googleCalendarTool",
+            "typeVersion": 1.3,
+            "position": [
+                -336,
+                720
+            ],
+            "id": "b21144a9-a66c-4df9-a7e3-156d50c4f206",
+            "name": "Get many events in Google Calendar",
+            "credentials": {
+                "googleCalendarOAuth2Api": {
+                    "id": "8UKHQOPZrL4gaRS4",
+                    "name": "Google Calendar - Ary"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "resource": "file",
+                "fileId": "={{ $item(\"0\").$node[\"Telegram Trigger\"].json[\"message\"][\"photo\"][\"3\"][\"file_id\"] }}",
+                "additionalFields": {
+                    "mimeType": ""
+                }
+            },
+            "type": "n8n-nodes-base.telegram",
+            "typeVersion": 1.2,
+            "position": [
+                -2352,
+                640
+            ],
+            "id": "2117eddb-360c-42d6-91ca-ffce60fa2591",
+            "name": "Get a file1",
+            "webhookId": "06bfe48f-d223-44f6-a36c-c6213214ca9d",
+            "credentials": {
+                "telegramApi": {
+                    "id": "jDGOWqDMlF8kILL5",
+                    "name": "Assistente Pessoal Familia"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "text": "=Extraia APENAS informações...",
+                "inputType": "base64",
+                "simplify": false,
+                "options": {}
+            },
+            "type": "@n8n/n8n-nodes-langchain.openAi",
+            "typeVersion": 2.1,
+            "position": [
+                -1712,
+                640
+            ],
+            "id": "1eceb88d-2079-44a5-865c-50ebf91bcef9",
+            "name": "Analyze image",
+            "credentials": {
+                "openAiApi": {
+                    "id": "So9Ha35boFOAmfdI",
+                    "name": "OpenAi Ary"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "mode": "combine",
+                "combineBy": "combineAll",
+                "options": {}
+            },
+            "type": "n8n-nodes-base.merge",
+            "typeVersion": 3.1,
+            "position": [
+                -1776,
+                928
+            ],
+            "id": "83491be4-4c59-4840-b3b6-bf543e2d09d6",
+            "name": "Merge",
+            "executeOnce": false
+        },
+        {
+            "parameters": {
+                "jsCode": "// Força MIME correto para o OpenAI Vision..."
+            },
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                -1920,
+                640
+            ],
+            "id": "c57bf4a6-4e82-43ae-9684-bacde6fd2133",
+            "name": "Code in JavaScript"
+        },
+        {
+            "parameters": {
+                "jsCode": "// pega o texto retornado pelo Analyze image..."
+            },
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                -1488,
+                640
+            ],
+            "id": "8f480d34-2fa3-4c13-9353-d2efcff00785",
+            "name": "Code in JavaScript1"
+        },
+        {
+            "parameters": {
+                "toolDescription": "Use esta ferramenta para registrar Transações Financeiras (add_transaction), Tarefas (add_task) e Eventos (add_event) no banco de dados do sistema.",
+                "method": "POST",
+                "url": "http://host.docker.internal:3000/api/n8n",
+                "sendBody": true,
+                "specifyBody": "json",
+                "jsonBody": "{\n \"action\": \"{action}\",\n \"payload\": {payload}\n}",
+                "authentication": "none",
+                "sendHeaders": true,
+                "headerParameters": {
+                    "parameters": [
+                        {
+                            "name": "Authorization",
+                            "value": "Bearer antigravity_secret_key_123"
+                        }
+                    ]
+                },
+                "placeholderDefinitions": {
+                    "values": [
+                        {
+                            "name": "action",
+                            "description": "A ação a ser realizada: add_transaction, add_task ou add_event",
+                            "type": "string"
+                        },
+                        {
+                            "name": "payload",
+                            "description": "Objeto JSON com os dados da ação (ex: amount, description para transação; title, priority para tarefa)",
+                            "type": "json"
+                        }
+                    ]
+                }
+            },
+            "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+            "typeVersion": 1.1,
+            "position": [
+                280,
+                1000
+            ],
+            "id": "antigravity-api-tool-1",
+            "name": "Antigravity API"
+        }
+    ],
+    "connections": {
+        "Tavily": {
+            "ai_tool": [
+                [
+                    {
+                        "node": "Agente Pessoal Completo",
+                        "type": "ai_tool",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Think": {
+            "ai_tool": [
+                [
+                    {
+                        "node": "Agente Pessoal Completo",
+                        "type": "ai_tool",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Agente Pessoal Completo": {
+            "main": [
+                [
+                    {
+                        "node": "Tipo de mensagem1",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Calculadora": {
+            "ai_tool": [
+                [
+                    {
+                        "node": "Agente Pessoal Completo",
+                        "type": "ai_tool",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Tipo de mensagem": {
+            "main": [
+                [
+                    {
+                        "node": "Set mensagens",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "Get a file",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "Get a file1",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Info": {
+            "main": [
+                [
+                    {
+                        "node": "Tipo de mensagem",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Upload arquivo": {
+            "main": [
+                []
+            ]
+        },
+        "Set mensagens": {
+            "main": [
+                [
+                    {
+                        "node": "Agente Pessoal Completo",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Tipo de mensagem2": {
+            "main": [
+                [
+                    {
+                        "node": "Send a text message",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "Enviar áudio",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Gerar áudio": {
+            "main": [
+                [
+                    {
+                        "node": "Tipo de mensagem2",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Formatar SSML": {
+            "main": [
+                [
+                    {
+                        "node": "Gerar áudio",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Tipo de mensagem1": {
+            "main": [
+                [
+                    {
+                        "node": "Formatar texto",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "Formatar SSML",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "OpenAI Chat Model1": {
+            "ai_languageModel": [
+                [
+                    {
+                        "node": "Formatar SSML",
+                        "type": "ai_languageModel",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "OpenAI Chat Model2": {
+            "ai_languageModel": [
+                [
+                    {
+                        "node": "Formatar texto",
+                        "type": "ai_languageModel",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Formatar texto": {
+            "main": [
+                [
+                    {
+                        "node": "Tipo de mensagem2",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Telegram Trigger": {
+            "main": [
+                [
+                    {
+                        "node": "Info",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Get a file": {
+            "main": [
+                [
+                    {
+                        "node": "Transcribe a recording",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Transcribe a recording": {
+            "main": [
+                [
+                    {
+                        "node": "Set mensagens",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "OpenAI Chat Model": {
+            "ai_languageModel": [
+                [
+                    {
+                        "node": "Agente Pessoal Completo",
+                        "type": "ai_languageModel",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Simple Memory": {
+            "ai_memory": [
+                [
+                    {
+                        "node": "Agente Pessoal Completo",
+                        "type": "ai_memory",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Create an event in Google Calendar": {
+            "ai_tool": [
+                [
+                    {
+                        "node": "Agente Pessoal Completo",
+                        "type": "ai_tool",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Delete an event in Google Calendar": {
+            "ai_tool": [
+                [
+                    {
+                        "node": "Agente Pessoal Completo",
+                        "type": "ai_tool",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Get many events in Google Calendar": {
+            "ai_tool": [
+                [
+                    {
+                        "node": "Agente Pessoal Completo",
+                        "type": "ai_tool",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Get a file1": {
+            "main": [
+                [
+                    {
+                        "node": "Upload arquivo",
+                        "type": "main",
+                        "index": 0
+                    },
+                    {
+                        "node": "Code in JavaScript",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Code in JavaScript": {
+            "main": [
+                [
+                    {
+                        "node": "Analyze image",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Analyze image": {
+            "main": [
+                [
+                    {
+                        "node": "Code in JavaScript1",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Code in JavaScript1": {
+            "main": [
+                [
+                    {
+                        "node": "Set mensagens",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Antigravity API": {
+            "ai_tool": [
+                [
+                    {
+                        "node": "Agente Pessoal Completo",
+                        "type": "ai_tool",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "active": true,
+    "settings": {
+        "executionOrder": "v1",
+        "binaryMode": "separate",
+        "availableInMCP": false
+    },
+    "id": "antigravity-integration-flow"
+}
