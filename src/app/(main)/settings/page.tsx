@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import { User, Shield, Moon, LogOut, Save, X, ChevronRight, Mail, Phone, Upload, RefreshCw, Smartphone } from "lucide-react";
-import { getUserProfile, updateUserProfile } from "@/app/actions";
+import { getUserProfile, updateUserProfile, signOut } from "@/app/actions";
 import { useRouter } from 'next/navigation';
 
 // Fotos realistas para rotação
@@ -235,7 +235,7 @@ export default function SettingsPage() {
 
                     <div className="pt-8">
                         <button
-                            onClick={() => alert("Logout realizado! (Simulação)")}
+                            onClick={async () => { await signOut(); router.push('/login'); }}
                             className="w-full flex items-center justify-center gap-2 p-4 rounded-2xl border border-rose-900/30 text-rose-500 hover:bg-rose-900/10 transition font-bold"
                         >
                             <LogOut size={20} /> Sair do App

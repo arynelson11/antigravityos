@@ -1,6 +1,7 @@
 'use server'
 import db from '@/lib/db';
 import { revalidatePath } from 'next/cache';
+import { getCurrentUser } from '@/lib/supabase/server';
 
 // --- TIPOS ---
 export interface Transaction {
@@ -71,7 +72,7 @@ export async function getMonthlyData() {
         // Using raw query for grouping by month
         const result = await db.$queryRaw<{ name: string; value: number }[]>`
             SELECT TO_CHAR(date, 'MM') as name, SUM(ABS(amount)) as value
-            FROM transactions
+            FROM "Transaction"
             WHERE type = 'expense'
             GROUP BY TO_CHAR(date, 'MM')
             ORDER BY MIN(date) ASC
@@ -83,6 +84,59 @@ export async function getMonthlyData() {
         return [];
     }
 }
+
+export async function getMonthlyExpenses() {
+    try {
+        const now = new Date();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+
+        // Get current month expenses
+        const currentMonthResult = await db.transaction.aggregate({
+            _sum: { amount: true },
+            where: {
+                type: 'expense',
+                date: {
+                    gte: startOfMonth,
+                    lte: endOfMonth,
+                },
+            },
+        });
+
+        // Get previous month expenses for comparison
+        const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
+
+        const lastMonthResult = await db.transaction.aggregate({
+            _sum: { amount: true },
+            where: {
+                type: 'expense',
+                date: {
+                    gte: startOfLastMonth,
+                    lte: endOfLastMonth,
+                },
+            },
+        });
+
+        const currentTotal = Math.abs(currentMonthResult._sum.amount || 0);
+        const lastMonthTotal = Math.abs(lastMonthResult._sum.amount || 0);
+
+        // Calculate percentage change
+        let percentChange = 0;
+        if (lastMonthTotal > 0) {
+            percentChange = Math.round(((currentTotal - lastMonthTotal) / lastMonthTotal) * 100);
+        }
+
+        return {
+            total: currentTotal,
+            percentChange,
+        };
+    } catch (error) {
+        console.error('Error fetching monthly expenses:', error);
+        return { total: 0, percentChange: 0 };
+    }
+}
+
 
 // --- TRANSAÇÕES & MOTOR DE PARCELAMENTO ---
 export async function addTransaction(formData: FormData) {
@@ -349,9 +403,16 @@ export async function getAllTransactions() {
 // --- USER SYSTEM ---
 export async function getUserProfile() {
     try {
-        // NOTE: In production, get user ID from auth session
-        const user = await db.profile.findFirst();
-        return user || { name: 'Usuário', avatar_url: '', email: '' };
+        const user = await getCurrentUser();
+        if (user) {
+            return {
+                id: user.id,
+                name: user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'Usuário',
+                avatar_url: user.user_metadata?.avatar_url || user.user_metadata?.picture || '',
+                email: user.email || '',
+            };
+        }
+        return { name: 'Usuário', avatar_url: '', email: '' };
     } catch (error) {
         console.error("Erro ao buscar user:", error);
         return { name: 'Usuário', avatar_url: '', email: '' };
@@ -365,22 +426,28 @@ export async function updateUserProfile(formData: FormData) {
     if (!name) return { success: false, error: 'Nome é obrigatório' };
 
     try {
-        // NOTE: In production, get user ID from auth session
-        const existingProfile = await db.profile.findFirst();
+        // Get current user
+        const user = await getCurrentUser();
+        if (!user) return { success: false, error: 'Não autenticado' };
 
-        if (existingProfile) {
-            await db.profile.update({
-                where: { id: existingProfile.id },
-                data: { name, avatar_url: avatarUrl },
-            });
-        }
-        console.log(`✅ Perfil atualizado: ${name}`);
+        // Update or create profile in database
+        await db.profile.upsert({
+            where: { id: user.id },
+            update: { name, avatar_url: avatarUrl || '' },
+            create: { id: user.id, name, avatar_url: avatarUrl || '' },
+        });
 
-        revalidatePath('/');
         revalidatePath('/settings');
         return { success: true };
     } catch (error) {
         console.error("Erro ao atualizar:", error);
         return { success: false, error: 'Erro ao salvar no banco' };
     }
+}
+
+export async function signOut() {
+    const { createClient } = await import('@/lib/supabase/server');
+    const supabase = await createClient();
+    await supabase.auth.signOut();
+    revalidatePath('/');
 }

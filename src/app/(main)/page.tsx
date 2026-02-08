@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect } from "react";
-import { getBalance, getTransactions, getUserProfile } from "@/app/actions";
+import { getBalance, getTransactions, getUserProfile, getMonthlyExpenses } from "@/app/actions";
 import NewTransactionModal from "@/components/NewTransactionModal";
 import ExpenseChart from "@/components/ExpenseChart";
 import { Bell, TrendingUp, ArrowUpRight, ArrowDownLeft, Search, X } from "lucide-react";
@@ -10,6 +10,7 @@ export default function Dashboard() {
   const [balance, setBalance] = useState(0);
   const [transactions, setTransactions] = useState<any[]>([]);
   const [user, setUser] = useState<any>(null);
+  const [monthlyExpenses, setMonthlyExpenses] = useState({ total: 0, percentChange: 0 });
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalType, setModalType] = useState<'income' | 'expense'>('expense');
@@ -21,9 +22,11 @@ export default function Dashboard() {
       setBalance(await getBalance());
       setTransactions(await getTransactions() as any[]);
       setUser(await getUserProfile());
+      setMonthlyExpenses(await getMonthlyExpenses());
     };
     loadData();
   }, [isModalOpen]);
+
 
   const filteredTransactions = transactions.filter(tx =>
     tx.description.toLowerCase().includes(searchTerm.toLowerCase())
@@ -189,9 +192,13 @@ export default function Dashboard() {
             <div className="p-6 rounded-[32px] bg-[#0A0A0A] border border-white/5 relative overflow-hidden">
               <div className="flex justify-between items-center mb-2">
                 <h3 className="font-bold text-gray-200">Gastos do Mês</h3>
-                <span className="text-xs bg-rose-500/10 text-rose-500 px-2 py-1 rounded-lg">-12%</span>
+                <span className={`text-xs px-2 py-1 rounded-lg ${monthlyExpenses.percentChange <= 0 ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'}`}>
+                  {monthlyExpenses.percentChange > 0 ? '+' : ''}{monthlyExpenses.percentChange}%
+                </span>
               </div>
-              <h2 className="text-3xl font-bold mb-4">R$ 4.250<span className="text-gray-600">.00</span></h2>
+              <h2 className="text-3xl font-bold mb-4">
+                {monthlyExpenses.total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+              </h2>
               <ExpenseChart />
             </div>
           </div>
